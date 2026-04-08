@@ -5,11 +5,11 @@
 # keep the application name and short name the same or different for dev and prod build
 # or some migration logic will behave differently for each build
 set( APPLICATION_NAME       "The Cloud Market" )
-set( APPLICATION_SHORTNAME  "TheCloudMarket" )
-set( APPLICATION_EXECUTABLE "thecloudmarket" )
+set( APPLICATION_SHORTNAME  "Nextcloud" )
+set( APPLICATION_EXECUTABLE "nextcloud" )
 set( APPLICATION_ICON_NAME  "Nextcloud" )
 
-set( APPLICATION_CONFIG_NAME "${APPLICATION_EXECUTABLE}" )
+set( APPLICATION_CONFIG_NAME "nextcloud" )
 set( APPLICATION_DOMAIN     "thecloud.market" )
 set( APPLICATION_VENDOR     "The Cloud Market" )
 set( APPLICATION_UPDATE_URL "https://thecloud.market/updates/filesync/" CACHE STRING "URL for updater" )
