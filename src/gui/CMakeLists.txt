@@ -581,7 +581,9 @@ target_include_directories(nextcloudCore
 )
 
 if(NOT BUILD_OWNCLOUD_OSX_BUNDLE)
-    if(NOT WIN32)
+    if(UNIX AND NOT APPLE)
+        # Linux hicolor theme install rules — only installed on Linux so Windows
+        # and macOS builds do not trip on missing hicolor icon size paths.
         file(GLOB _icons "${theme_dir}/colored/*-${APPLICATION_ICON_NAME}-icon.png")
         foreach(_file ${_icons})
             string(REPLACE "${theme_dir}/colored/" "" _res ${_file})
@@ -589,7 +591,8 @@ if(NOT BUILD_OWNCLOUD_OSX_BUNDLE)
             install(FILES ${_file} RENAME ${APPLICATION_ICON_NAME}.png DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/${_res}x${_res}/apps)
         endforeach(_file)
         install(FILES ${client_I18N} DESTINATION ${CMAKE_INSTALL_DATADIR}/${APPLICATION_EXECUTABLE}/i18n)
-    else()
+    endif()
+    if(WIN32)
         file(GLOB_RECURSE VISUAL_ELEMENTS "${theme_dir}/colored/*-${APPLICATION_ICON_NAME}-w10startmenu*")
         install(FILES ${VISUAL_ELEMENTS} DESTINATION bin/visualelements)
         install(FILES "${theme_dir}/${APPLICATION_EXECUTABLE}.VisualElementsManifest.xml" DESTINATION bin)
