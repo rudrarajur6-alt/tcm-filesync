@@ -64,24 +64,11 @@ jobs:
       - name: Patch upstream blueprint (missing import os + TCM appname/company)
         shell: pwsh
         run: |
-          # Upstream nextcloud/desktop-client-blueprints has a NameError in
-          # createPackage() — uses os.path.join without importing os.
-          # Also rewrite defines so installer folder + product name are TCM.
           $blueprint = Get-ChildItem -Path "${{ env.CRAFT_TARGET }}" -Recurse -Filter "nextcloud-client.py" | Where-Object { $_.FullName -match "blueprints.*nextcloud-client" } | Select-Object -First 1
           if (-not $blueprint) { Write-Host "ERROR: blueprint not found"; exit 1 }
-          $content = Get-Content $blueprint.FullName -Raw
-          if ($content -notmatch '(?m)^import os') {
-            $content = "import os`n" + $content
-          }
-          $content = $content -replace 'self\.defines\[.appname.\]\s*=\s*".+?"', 'self.defines["appname"] = "thecloudmarket"'
-          $content = $content -replace 'self\.defines\[.company.\]\s*=\s*".+?"', 'self.defines["company"] = "The Cloud Market"'
-          if ($content -notmatch 'productname') {
-            $content = $content -replace '(self\.defines\[.company.\][^\n]*\n)', "`$1        self.defines[`"productname`"] = `"The Cloud Market`"`n"
-          }
-          Set-Content -Path $blueprint.FullName -Value $content
-          Write-Host "Patched: $($blueprint.FullName)"
+          python "${{ github.workspace }}\scripts\patch-blueprint.py" $blueprint.FullName
           Write-Host "--- patched defines ---"
-          Get-Content $blueprint.FullName | Select-String -Pattern 'self\.defines'
+          Get-Content $blueprint.FullName | Select-String -Pattern 'self\.defines|^import os'
 
       - name: Package Windows installer
         shell: pwsh
@@ -167,25 +154,9 @@ jobs:
         run: |
           blueprint=$(find "$CRAFT_TARGET" -path "*/blueprints/*/nextcloud-client/nextcloud-client.py" 2>/dev/null | head -1)
           if [ -z "$blueprint" ]; then echo "ERROR: blueprint not found"; exit 1; fi
-          if ! head -5 "$blueprint" | grep -q "^import os"; then
-            sed -i '' '1i\
-import os
-' "$blueprint"
-          fi
-          # Rewrite defines so installer folder + product name are TCM
-          python3 - "$blueprint" <<'PYEOF'
-          import sys, re
-          p = sys.argv[1]
-          s = open(p).read()
-          s = re.sub(r'self\.defines\["appname"\]\s*=\s*".+?"', 'self.defines["appname"] = "thecloudmarket"', s)
-          s = re.sub(r'self\.defines\["company"\]\s*=\s*".+?"', 'self.defines["company"] = "The Cloud Market"', s)
-          if 'productname' not in s:
-              s = re.sub(r'(self\.defines\["company"\][^\n]*\n)', r'\1        self.defines["productname"] = "The Cloud Market"\n', s)
-          open(p, 'w').write(s)
-          print("Patched", p)
-          PYEOF
+          python3 "${{ github.workspace }}/scripts/patch-blueprint.py" "$blueprint"
           echo "--- patched defines ---"
-          grep "self.defines" "$blueprint"
+          grep "self.defines\|^import os" "$blueprint" | head -10
 
       - name: Package macOS installer
         run: |
